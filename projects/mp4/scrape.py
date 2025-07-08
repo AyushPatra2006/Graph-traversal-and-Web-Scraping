@@ -7,7 +7,7 @@ If you're working alone, enter `None` for the partner fields.
 
 '''
 Project: MP4
-Student 1: <Name>, <NETID>
+Student 1: Ayush Patra, <NETID>
 Student 2: <Name>, <NETID>
 Student 3: <Name>, <NETID>
 Student 4: <Name>, <NETID>
