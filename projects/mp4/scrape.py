@@ -12,6 +12,8 @@ Student 2: <Name>, <NETID>
 Student 3: <Name>, <NETID>
 Student 4: <Name>, <NETID>
 '''
+from collections import deque
+
 class GraphSearcher:
     def __init__(self):
         self.visited = set()
@@ -44,6 +46,22 @@ class GraphSearcher:
         # 4. in a loop, call dfs_visit on each of the children
         for child in children:
             self.dfs_visit(child)
+    def bfs_search(self,node):
+        self.visited.clear()
+        self.order.clear()
+        self.bfs_visit(node) 
+    def bfs_visit(self, node):
+        queue = deque([node])
+        self.visited.add(node)
+
+        while queue:
+            current = queue.popleft()
+            children = self.visit_and_get_children(current)
+            for child in children:
+                if child not in self.visited:
+                    self.visited.add(child)
+                    queue.append(child)
+            
 class MatrixSearcher(GraphSearcher):
     def __init__(self, df):
         super().__init__() # call constructor method of parent class
@@ -58,3 +76,17 @@ class MatrixSearcher(GraphSearcher):
                 children.append(child)
         # TODO: use `self.df` to determine what children the node has and append them
         return children
+class FileSearcher(GraphSearcher):
+    def __init__(self):
+        super().__init__()
+    def visit_and_get_children(self, node):
+        with open(f"file_nodes/{node}", 'r') as f:
+            lines = f.read().splitlines()
+            value = lines[0]
+            children_line = lines[1] if len(lines) > 1 else ""
+            children = [child.strip() for child in children_line.split(",") if child.strip()]
+
+        self.order.append(value)
+        return children
+    def concat_order(self):
+        return ''.join(self.order)
