@@ -13,7 +13,9 @@ Student 3: <Name>, <NETID>
 Student 4: <Name>, <NETID>
 '''
 from collections import deque
-
+import pandas as pd
+from selenium.webdriver.common.by import By
+from io import StringIO
 class GraphSearcher:
     def __init__(self):
         self.visited = set()
@@ -90,3 +92,52 @@ class FileSearcher(GraphSearcher):
         return children
     def concat_order(self):
         return ''.join(self.order)
+class WebSearcher(GraphSearcher):
+    def __init__(self,driver):
+        super().__init__()
+        self.driver = driver
+        self.tables = []
+    def visit_and_get_children(self, node):
+        self.order.append(node)
+        self.driver.get(node)
+        links = []
+        for elem in self.driver.find_elements("tag name", "a"):
+            href = elem.get_attribute("href")
+            if href:
+                links.append(href)
+        try:
+            page_tables = pd.read_html(StringIO(self.driver.page_source))[0]
+            self.tables.append(page_tables)  # accumulate tables
+        except ValueError:
+            # pandas raises ValueError if no tables are found
+            pass
+        return links
+    def table(self):
+        wanted_tables = self.tables
+        # concatenate them into one big DataFrame
+        if wanted_tables:
+            df = pd.concat(wanted_tables, ignore_index=True)
+            df = df.dropna(axis=1, how='all')
+            return df
+        else:
+            return pd.DataFrame() 
+    def reveal_secrets(driver, url, travellog):
+        password = ''.join(str(int(clue)) for clue in travellog["clue"])
+        driver.get(url)
+        print("Current URL:", driver.current_url)
+        print("Page HTML snippet:\n", driver.page_source[:500]) 
+        box = driver.find_element(By.ID, "password")  # assumes input has id="password"
+        box.send_keys(password)
+        go_button = driver.find_element(By.ID, "go")  # assumes button has id="go"
+        go_button.click()
+        time.sleep(2)
+        view_button = driver.find_element(By.ID, "view")  # assumes id="view"
+        view_button.click()
+        time.sleep(2)
+        img_element = driver.find_element(By.TAG_NAME, "img")
+        img_url = img_element.get_attribute("src")
+        img_data = requests.get(img_url).content
+        with open("Current_Location.jpg", "wb") as f:
+            f.write(img_data)
+        location_text = driver.find_element(By.ID, "location").text
+        return location_text
