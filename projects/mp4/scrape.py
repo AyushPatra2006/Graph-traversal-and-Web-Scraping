@@ -16,6 +16,8 @@ from collections import deque
 import pandas as pd
 from selenium.webdriver.common.by import By
 from io import StringIO
+import time
+import requests
 class GraphSearcher:
     def __init__(self):
         self.visited = set()
@@ -121,23 +123,23 @@ class WebSearcher(GraphSearcher):
             return df
         else:
             return pd.DataFrame() 
-    def reveal_secrets(driver, url, travellog):
-        password = ''.join(str(int(clue)) for clue in travellog["clue"])
-        driver.get(url)
-        print("Current URL:", driver.current_url)
-        print("Page HTML snippet:\n", driver.page_source[:500]) 
-        box = driver.find_element(By.ID, "password")  # assumes input has id="password"
-        box.send_keys(password)
-        go_button = driver.find_element(By.ID, "go")  # assumes button has id="go"
-        go_button.click()
-        time.sleep(2)
-        view_button = driver.find_element(By.ID, "view")  # assumes id="view"
-        view_button.click()
-        time.sleep(2)
-        img_element = driver.find_element(By.TAG_NAME, "img")
-        img_url = img_element.get_attribute("src")
-        img_data = requests.get(img_url).content
-        with open("Current_Location.jpg", "wb") as f:
-            f.write(img_data)
-        location_text = driver.find_element(By.ID, "location").text
-        return location_text
+def reveal_secrets(driver, url, travellog):
+    password = ''.join(str(int(clue)) for clue in travellog["clue"])
+    driver.get(url)
+    print("Current URL:", driver.current_url)
+    print("Page HTML snippet:\n", driver.page_source[:500]) 
+    box = driver.find_element(By.ID, "password-textbox")  # assumes input has id="password"
+    box.send_keys(password)
+    go_button = driver.find_element(By.ID, "submit-button")  # assumes button has id="go"
+    go_button.click()
+    time.sleep(2)
+    view_button = driver.find_element(By.ID, "location-button")  # assumes id="view"
+    view_button.click()
+    time.sleep(2)
+    img_element = driver.find_element(By.ID, "image")
+    img_url = img_element.get_attribute("src")
+    img_data = requests.get(img_url).content
+    with open("Current_Location.jpg", "wb") as f:
+        f.write(img_data)
+    location_text = driver.find_element(By.ID, "location").text
+    return location_text
